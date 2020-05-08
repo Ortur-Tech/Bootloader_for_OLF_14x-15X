@@ -25,19 +25,6 @@
   * @retval None
   */
 
-void GPIO_Config(void)
-{
-    GPIO_InitTypeDef GPIO_InitStructure;
-
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
-
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-
-    GPIO_Init(GPIOC, &GPIO_InitStructure);
-}
-
 void Jump(uint32_t address)
 {
     typedef void (*pFunction)(void);
@@ -69,6 +56,7 @@ void Jump(uint32_t address)
     Jump_To_Application();
 }
 
+// Force USB Reconnect
 void reset_usb() {
     GPIO_InitTypeDef GPIO_InitStructure;
 
@@ -83,6 +71,56 @@ void reset_usb() {
     GPIO_ResetBits(GPIOA, GPIO_Pin_12);
 }
 
+void init_usb()
+{
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+    USB_Interrupts_Config();
+    Set_USBClock();
+    USB_Init();
+}
+
+void Leds_init()
+{
+    //初始灯光
+    GPIO_InitTypeDef GPIO_InitStructure;
+
+    //NOTE:在主函数中执行
+    //PB4 PB3 PA15默认用作调试口，如果用作普通的IO，需要加上以下两句
+    //RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
+    //GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
+
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+    GPIO_SetBits(GPIOB,GPIO_Pin_3);
+
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIO_ResetBits(GPIOA,GPIO_Pin_15);
+
+    //默认灯光关闭
+    GPIO_WriteBit(GPIOB, GPIO_Pin_3, Bit_RESET);
+    GPIO_WriteBit(GPIOA, GPIO_Pin_15, Bit_RESET);
+}
+
+void Led_Off(void)
+{
+    GPIO_WriteBit(GPIOB, GPIO_Pin_3, Bit_RESET);
+    GPIO_WriteBit(GPIOA, GPIO_Pin_15, Bit_RESET);
+}
+
+void Led_On(void)
+{
+    GPIO_WriteBit(GPIOB, GPIO_Pin_3, Bit_SET);
+    GPIO_WriteBit(GPIOA, GPIO_Pin_15, Bit_SET);
+}
+
+uint8_t update_result = 0;
+uint8_t need_refresh = 0;
+
 int main(void)
 {
     /*!< At this stage the microcontroller clock setting is already configured, 
@@ -91,26 +129,67 @@ int main(void)
        To reconfigure the default setting of SystemInit() function, refer to
        system_stm32f10x.c file
      */
+  
+    //释放几个特殊引脚做IO用
+    //PB4 PB3 PA15默认用作调试口，如果用作普通的IO，需要加上以下两句
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
+    GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
+  
     Key_GPIO_Config();
-    GPIO_Config();
+    Leds_init();
     
     // Force USB Reconnect
     reset_usb();
     Delayms(10);
     
     // If ISP Key is not pressed, jump to user application
-    if (Key_Scan(GPIOC, GPIO_Pin_15) == KEY_OFF)
+    if (Key_Scan() == KEY_OFF) //NOTE:交互按钮按下就进入固件升级模式
     {
         Jump(FLASH_START_ADDR);
     }
 
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
-    USB_Interrupts_Config();
-    Set_USBClock();
-    USB_Init();
+    init_usb();
 
     while (1)
     {
+      if(update_result == UR_READY)
+      {
+        need_refresh = 0;
+        Led_On();
+        Delayms(100);
+        Led_Off();
+        Delayms(100);
+      }
+      else if(update_result == UR_SUCCESS)
+      {
+        Led_On();
+        
+        if(need_refresh)
+        {
+          need_refresh = 0;
+          //Delayms(1000);
+          //reset_usb();
+          //Delayms(10);
+          //init_usb();
+          //Device_Property.Reset();
+        }
+      }
+      else if(update_result == UR_LARGE || update_result == UR_UNKOWN)
+      {
+        Led_On();
+        Delayms(1000);
+        Led_Off();
+        Delayms(1000);
+        
+        if(need_refresh)
+        {
+          need_refresh = 0;
+          //Device_Property.Reset();
+          //reset_usb();
+          //Delayms(10);
+          //init_usb();
+        }
+      }
     }
 }
 
@@ -134,6 +213,8 @@ void assert_failed(uint8_t *file, uint32_t line)
     }
 }
 #endif
+
+
 
 /**
   * @}
