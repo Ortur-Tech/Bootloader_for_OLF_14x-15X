@@ -25,7 +25,7 @@ if not "%~1" == "" goto debugFile
 
 @echo on 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.0\common\bin\cspybat" -f "C:\Users\ZephRay\Documents\GitHub\stm32_msc_bootloader\Source\EWARM\settings\Project.STM32100B-EVAL.general.xcl" --backend -f "C:\Users\ZephRay\Documents\GitHub\stm32_msc_bootloader\Source\EWARM\settings\Project.STM32100B-EVAL.driver.xcl" 
+"D:\Embedded Workbench 8.1\common\bin\cspybat" -f "E:\STM32CubeIDEWorkSpqce\stm32_msc_bootloader\Source\EWARM\settings\Project.STM32100B-EVAL.general.xcl" --backend -f "E:\STM32CubeIDEWorkSpqce\stm32_msc_bootloader\Source\EWARM\settings\Project.STM32100B-EVAL.driver.xcl" 
 
 @echo off 
 goto end 
@@ -34,7 +34,7 @@ goto end
 
 @echo on 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.0\common\bin\cspybat" -f "C:\Users\ZephRay\Documents\GitHub\stm32_msc_bootloader\Source\EWARM\settings\Project.STM32100B-EVAL.general.xcl" "--debug_file=%~1" --backend -f "C:\Users\ZephRay\Documents\GitHub\stm32_msc_bootloader\Source\EWARM\settings\Project.STM32100B-EVAL.driver.xcl" 
+"D:\Embedded Workbench 8.1\common\bin\cspybat" -f "E:\STM32CubeIDEWorkSpqce\stm32_msc_bootloader\Source\EWARM\settings\Project.STM32100B-EVAL.general.xcl" "--debug_file=%~1" --backend -f "E:\STM32CubeIDEWorkSpqce\stm32_msc_bootloader\Source\EWARM\settings\Project.STM32100B-EVAL.driver.xcl" 
 
 @echo off 
 :end

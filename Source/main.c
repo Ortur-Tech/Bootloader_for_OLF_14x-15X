@@ -25,6 +25,7 @@
   * @retval None
   */
 
+
 void Jump(uint32_t address)
 {
     typedef void (*pFunction)(void);
@@ -89,12 +90,26 @@ void Leds_init()
     //RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
     //GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
 
+#ifndef ORTUR_CNC_MODE
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOB, &GPIO_InitStructure);
     GPIO_SetBits(GPIOB,GPIO_Pin_3);
-
+    
+    //默认灯光关闭
+    GPIO_WriteBit(GPIOB, GPIO_Pin_3, Bit_RESET);
+#else
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIO_SetBits(GPIOA,GPIO_Pin_3);
+    
+    //默认灯光关闭
+    GPIO_WriteBit(GPIOB, GPIO_Pin_3, Bit_RESET);
+#endif
+    
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -102,19 +117,27 @@ void Leds_init()
     GPIO_ResetBits(GPIOA,GPIO_Pin_15);
 
     //默认灯光关闭
-    GPIO_WriteBit(GPIOB, GPIO_Pin_3, Bit_RESET);
     GPIO_WriteBit(GPIOA, GPIO_Pin_15, Bit_RESET);
+    
 }
 
 void Led_Off(void)
 {
+#ifndef ORTUR_CNC_MODE
     GPIO_WriteBit(GPIOB, GPIO_Pin_3, Bit_RESET);
+#else
+    GPIO_WriteBit(GPIOA, GPIO_Pin_14, Bit_RESET);
+#endif
     GPIO_WriteBit(GPIOA, GPIO_Pin_15, Bit_RESET);
 }
 
 void Led_On(void)
 {
+#ifndef ORTUR_CNC_MODE
     GPIO_WriteBit(GPIOB, GPIO_Pin_3, Bit_SET);
+#else
+    GPIO_WriteBit(GPIOA, GPIO_Pin_14, Bit_SET);
+#endif
     GPIO_WriteBit(GPIOA, GPIO_Pin_15, Bit_SET);
 }
 
@@ -133,7 +156,11 @@ int main(void)
     //释放几个特殊引脚做IO用
     //PB4 PB3 PA15默认用作调试口，如果用作普通的IO，需要加上以下两句
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
-    GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
+#ifndef ORTUR_CNC_MODE
+    GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);//JTAG-DP Disabled and SW-DP Enabled
+#else
+    GPIO_PinRemapConfig(GPIO_Remap_SWJ_Disable,ENABLE);//Full SWJ Disabled (JTAG-DP + SW-DP)
+#endif
   
     Key_GPIO_Config();
     Leds_init();
@@ -142,6 +169,7 @@ int main(void)
     reset_usb();
     Delayms(10);
     
+    //NOTE:CNC设备测试,暂时屏蔽升级功能
     // If ISP Key is not pressed, jump to user application
     if (Key_Scan() == KEY_OFF) //NOTE:交互按钮按下就进入固件升级模式
     {

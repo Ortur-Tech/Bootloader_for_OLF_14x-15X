@@ -3,6 +3,7 @@
 
 void Key_GPIO_Config(void)
 {
+#ifndef ORTUR_CNC_MODE
     RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOC|RCC_APB2Periph_AFIO,ENABLE );
     PWR_BackupAccessCmd( ENABLE );/* 允许修改RTC和后备寄存器*/
     RCC_LSEConfig( RCC_LSE_OFF ); /* 关闭外部低速时钟,PC14+PC15可以用作普通IO*/
@@ -16,6 +17,13 @@ void Key_GPIO_Config(void)
 
     PWR_BackupAccessCmd(DISABLE);/* 禁止修改RTC和后备寄存器*/
     //BKP_ITConfig(DISABLE);       /* 禁止TAMPER 中断*/
+#else
+    GPIO_InitTypeDef GPIO_InitStructure;
+    GPIO_InitStructure.GPIO_Pin = KEY_PIN;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;          
+    GPIO_Init(KEY_PORT, &GPIO_InitStructure);
+#endif
 }
 
 u8 Key_Scan(void)

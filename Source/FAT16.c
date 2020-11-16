@@ -162,7 +162,11 @@ const uint8_t FAT16_RootDirSector[FATDirSize]=
     0x00,           /*29 - File Size */
     0x00,           /*30 - File Size */
     0x00,           /*31 - File Size */
+#ifndef ORTUR_CNC_MODE
     'O','R','T','U','R',' ','L','A','S','E','R',  /*32-42 - Volume label */
+#else
+    'O','R','T','U','R',' ','C','N','C','\0','\0',  /*32-42 - Volume label */
+#endif
     0x08,           /*43 - File attribute = Volume label */
     0x00,           /*44 - Reserved */
     0x00,           /*45 - Create Time Tenth */
@@ -313,7 +317,11 @@ uint32_t FAT_DataSectorWriteRequest(uint32_t FAT_LBA,uint8_t* data, uint32_t len
     if(!memcmp(FileAttr.DIR_Name, "@\0", 1)) return len;
 
     //ÅÐ¶ÏÎÄ¼þÃû upword only "OLF_xxx.BIN" => Ortur Laser Firmware_120.BIN
+#ifndef ORTUR_CNC_MODE
     if (!memcmp(FileAttr.DIR_Name, "OLF", 3) && !memcmp(&(FileAttr.DIR_Name[8]), "BIN", 3))
+#else
+    if (!memcmp(FileAttr.DIR_Name, "OCF", 3) && !memcmp(&(FileAttr.DIR_Name[8]), "BIN", 3))
+#endif
     {
         LED_ON();
         uint16_t flash_cnt = *(volatile uint16_t *) 0x1FFFF7E0;

@@ -4,6 +4,10 @@
 #include "stm32f10x.h"
 #include <stdio.h>
 
+//Ä£Ê½ÇÐ»»
+#define ORTUR_CNC_MODE
+//#define ORTUR_LASER_MODE
+
 #define LED_RCC RCC_APB2Periph_GPIOB
 #define LED_PORT GPIOB
 #define LED_PIN GPIO_Pin_3
