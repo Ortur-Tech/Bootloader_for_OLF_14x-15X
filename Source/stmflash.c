@@ -51,7 +51,8 @@ void STMFLASH_Write(u32 WriteAddr, u16 *pBuffer, u16 NumToWrite)
             if (STMFLASH_BUF[secoff + i] != 0XFFFF)
                 break;
         }
-        if (i < secremain)
+        //NOTE:此处内存必须强制擦除才能写入数据
+        if (1) //(i < secremain)
         {
             FLASH_ErasePage(secpos * STM_SECTOR_SIZE + STM32_FLASH_BASE);
             for (i = 0; i < secremain; i++)

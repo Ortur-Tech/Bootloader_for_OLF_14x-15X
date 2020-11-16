@@ -130,13 +130,14 @@ const uint8_t FAT16_TableSector0[FATTableSize]=
 *********************************************************************
 ********************************************************************/
 
-uint8_t FAT16_ReadyFileName[FATFileNameSize]= 
+uint8_t FAT16_StatusFileName[FATFileNameSize]= 
 {
     'R','E','A','D','Y',' ',' ',' ','T','X','T'    /*00-10 - Short File Name */
 };
 
 // TODO
 // Change Finish to Success
+// NOTE: 变更升级盘符名为 "ORTUR LASER"
 
 const uint8_t FAT16_RootDirSector[FATDirSize]= 
 {
@@ -161,7 +162,11 @@ const uint8_t FAT16_RootDirSector[FATDirSize]=
     0x00,           /*29 - File Size */
     0x00,           /*30 - File Size */
     0x00,           /*31 - File Size */
-    'B','O','O','T','L','O','A','D','E','R',' ',  /*32-42 - Volume label */
+#ifndef ORTUR_CNC_MODE
+    'O','R','T','U','R',' ','L','A','S','E','R',  /*32-42 - Volume label */
+#else
+    'O','R','T','U','R',' ','C','N','C','\0','\0',  /*32-42 - Volume label */
+#endif
     0x08,           /*43 - File attribute = Volume label */
     0x00,           /*44 - Reserved */
     0x00,           /*45 - Create Time Tenth */
@@ -242,7 +247,7 @@ uint32_t FATReadLBA(uint32_t FAT_LBA,uint8_t* data, uint32_t len)
             
             for(i=0;i<FATFileNameSize;i++) 
             {
-                *data++ = FAT16_ReadyFileName[i];
+                *data++ = FAT16_StatusFileName[i];
             } /* EndFor */
                             
             /* Write rest of file FAT structure */
@@ -300,12 +305,23 @@ uint32_t FAT_RootDirWriteRequest(uint32_t FAT_LBA,uint8_t* data, uint32_t len)
     return len;
 }
 
+// Force USB Reconnect
+extern void reset_usb(); //@\0 
+
 uint32_t FAT_DataSectorWriteRequest(uint32_t FAT_LBA,uint8_t* data, uint32_t len)
 {
     int32_t filesize_total = (int32_t)FileAttr.DIR_FileSize;
     int32_t* filesize_write = (int32_t*)&(FileAttr.DIR_WriteTime);
+    
+    //跳过一个空文件数据,@开头
+    if(!memcmp(FileAttr.DIR_Name, "@\0", 1)) return len;
 
-    if (!memcmp(&(FileAttr.DIR_Name[8]), "BIN", 3))
+    //判断文件名 upword only "OLF_xxx.BIN" => Ortur Laser Firmware_120.BIN
+#ifndef ORTUR_CNC_MODE
+    if (!memcmp(FileAttr.DIR_Name, "OLF", 3) && !memcmp(&(FileAttr.DIR_Name[8]), "BIN", 3))
+#else
+    if (!memcmp(FileAttr.DIR_Name, "OCF", 3) && !memcmp(&(FileAttr.DIR_Name[8]), "BIN", 3))
+#endif
     {
         LED_ON();
         uint16_t flash_cnt = *(volatile uint16_t *) 0x1FFFF7E0;
@@ -314,18 +330,23 @@ uint32_t FAT_DataSectorWriteRequest(uint32_t FAT_LBA,uint8_t* data, uint32_t len
         if(freeflash >= FileAttr.DIR_FileSize)
         {
             // Flash MCU
-            STMFLASH_Write(FLASH_START_ADDR + FAT_LBA - FileAttr.DIR_ClusLow * 8192,(u16*)data, len/2);
+            // NOTE: 不知道为什么,数据偏移地址不对,强制偏移值为 0x8004000
+            STMFLASH_Write(FLASH_START_ADDR-(56*1024) + FAT_LBA - FileAttr.DIR_ClusLow * 8192,(u16*)data, len/2);
             *filesize_write += len;
             if(*filesize_write >= filesize_total)
             {
                 *filesize_write = 0;
                 FATSetStatusFileName("SUCCESS");
+                update_result = UR_SUCCESS;
+                need_refresh = 1;
                 LED_OFF();
             }
         }
         else
         {
             FATSetStatusFileName("LARGE");
+            update_result = UR_LARGE;
+            need_refresh = 1;
         }
     }
     else
@@ -333,6 +354,8 @@ uint32_t FAT_DataSectorWriteRequest(uint32_t FAT_LBA,uint8_t* data, uint32_t len
         // Can't Recognize it
         // Cancel and Reset USB
         FATSetStatusFileName("UNKOWN");
+        update_result = UR_UNKOWN;
+        need_refresh = 1;
     }
 
     return len;
@@ -369,12 +392,12 @@ uint32_t FATSetStatusFileName(const char * name)
     
     for(i=0; i<8 && i<len; i++)
     {
-        FAT16_ReadyFileName[i] = name[i];
+        FAT16_StatusFileName[i] = name[i];
     }
     
     for(; i < 8; i++)
     {
-        FAT16_ReadyFileName[i] = ' ';
+        FAT16_StatusFileName[i] = ' ';
     }
     
     return i;

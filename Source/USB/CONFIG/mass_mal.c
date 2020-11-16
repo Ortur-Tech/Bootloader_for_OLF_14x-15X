@@ -31,10 +31,10 @@
 #include "mass_mal.h"
 #include "FAT16.h"
 
-#define     MAL_START_ADDR        0x08016000       // Flash start address 
-#define     MAL_SIZE              (100*1024*1024)  // 100M
-#define     MAL_PAGE_SIZE         (2*1024)         // 2k Bytes per page
-#define     MAL_WAIT_TIMEOUT      100000
+#define     MAL_START_ADDR        FLASH_START_ADDR       // Flash start address 
+#define     MAL_SIZE              FLASH_SIZE             // 100MB
+#define     MAL_PAGE_SIZE         FLASH_PAGE_SIZE        // 2k Bytes per page
+#define     MAL_WAIT_TIMEOUT      FLASH_WAIT_TIMEOUT
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
