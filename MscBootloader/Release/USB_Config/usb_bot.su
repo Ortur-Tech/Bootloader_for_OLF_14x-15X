@@ -1,0 +1,7 @@
+usb_bot.c:315:6:Bot_Abort.part.1	8	static
+usb_bot.c:272:6:Transfer_Data_Request	8	static
+usb_bot.c:291:6:Set_CSW	8	static
+usb_bot.c:50:6:Mass_Storage_In	8	static
+usb_bot.c:126:6:CBW_Decode	16	static
+usb_bot.c:315:6:Bot_Abort	0	static
+usb_bot.c:86:6:Mass_Storage_Out	16	static

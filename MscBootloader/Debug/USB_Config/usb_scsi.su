@@ -1,0 +1,16 @@
+usb_scsi.c:44:6:SCSI_Inquiry_Cmd	0	static
+usb_scsi.c:78:6:SCSI_ReadFormatCapacity_Cmd	8	static
+usb_scsi.c:106:6:SCSI_ReadCapacity10_Cmd	8	static
+usb_scsi.c:136:6:SCSI_ModeSense6_Cmd	0	static
+usb_scsi.c:148:6:SCSI_ModeSense10_Cmd	0	static
+usb_scsi.c:160:6:SCSI_RequestSense_Cmd	0	static
+usb_scsi.c:183:6:Set_Scsi_Sense_Data	0	static
+usb_scsi.c:196:6:SCSI_Start_Stop_Unit_Cmd	0	static
+usb_scsi.c:280:6:SCSI_Verify10_Cmd	8	static
+usb_scsi.c:300:6:SCSI_Valid_Cmd	8	static
+usb_scsi.c:318:6:SCSI_TestUnitReady_Cmd	8	static
+usb_scsi.c:339:6:SCSI_Format_Cmd	8	static
+usb_scsi.c:356:6:SCSI_Invalid_Cmd	8	static
+usb_scsi.c:384:6:SCSI_Address_Management	8	static
+usb_scsi.c:208:6:SCSI_Read10_Cmd	24	static
+usb_scsi.c:244:6:SCSI_Write10_Cmd	24	static

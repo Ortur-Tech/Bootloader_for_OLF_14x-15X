@@ -1,0 +1,4 @@
+mass_mal.c:57:10:MAL_Init	0	static
+mass_mal.c:75:10:MAL_Write	16	static
+mass_mal.c:95:10:MAL_Read	16	static
+mass_mal.c:115:10:MAL_GetStatus	0	static

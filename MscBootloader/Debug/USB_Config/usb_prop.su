@@ -1,0 +1,14 @@
+usb_prop.c:218:6:Mass_Storage_SetDeviceAddress	0	static
+usb_prop.c:229:6:MASS_Status_In	0	static
+usb_prop.c:318:8:MASS_Get_Interface_Setting	0	static
+usb_prop.c:383:5:Get_Max_Lun	0	static
+usb_prop.c:103:6:MASS_init	8	static
+usb_prop.c:131:6:MASS_Reset	16	static
+usb_prop.c:203:6:Mass_Storage_ClearFeature	0	static
+usb_prop.c:338:5:MASS_GetDeviceDescriptor	0	static
+usb_prop.c:350:5:MASS_GetConfigDescriptor	0	static
+usb_prop.c:362:5:MASS_GetStringDescriptor	0	static
+usb_prop.c:184:6:Mass_Storage_SetConfiguration	8	static
+usb_prop.c:289:8:MASS_NoData_Setup	8	static
+usb_prop.c:241:6:MASS_Status_Out	0	static
+usb_prop.c:253:8:MASS_Data_Setup	0	static

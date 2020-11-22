@@ -1,0 +1,12 @@
+hw_config.c:24:6:Set_USBClock	8	static
+hw_config.c:37:6:Enter_LowPowerMode	0	static
+hw_config.c:48:6:Leave_LowPowerMode	0	static
+hw_config.c:64:6:USB_Interrupts_Config	24	static
+hw_config.c:100:6:Led_RW_ON	0	static
+hw_config.c:112:6:Led_RW_OFF	0	static
+hw_config.c:123:6:USB_Configured_LED	0	static
+hw_config.c:135:6:USB_NotConfigured_LED	0	static
+hw_config.c:146:6:USB_Cable_Config	0	static
+hw_config.c:165:6:Get_SerialNum	8	static
+hw_config.c:193:6:MAL_Config	0	static
+hw_config.c:204:6:USB_Disconnect_Config	0	static

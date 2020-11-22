@@ -1,0 +1,2 @@
+usb_endp.c:35:6:EP1_IN_Callback	0	static
+usb_endp.c:47:6:EP2_OUT_Callback	0	static

@@ -1,0 +1,4 @@
+stmflash.c:5:5:STMFLASH_ReadHalfWord	0	static
+stmflash.c:12:6:STMFLASH_Write_NoCheck	16	static
+stmflash.c:85:6:STMFLASH_Read	8	static
+stmflash.c:31:6:STMFLASH_Write	32	static

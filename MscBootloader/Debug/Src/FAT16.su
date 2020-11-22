@@ -1,0 +1,5 @@
+FAT16.c:201:10:FATReadLBA	8	static
+FAT16.c:281:10:FAT_RootDirWriteRequest	24	static
+FAT16.c:679:10:FATSetStatusFileName	8	static
+FAT16.c:314:10:FAT_DataSectorWriteRequest	40	static
+FAT16.c:655:10:FATWriteLBA	16	static

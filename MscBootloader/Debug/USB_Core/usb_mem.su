@@ -1,0 +1,2 @@
+usb_mem.c:35:6:UserToPMABufferCopy	0	static
+usb_mem.c:60:6:PMAToUserBufferCopy	8	static

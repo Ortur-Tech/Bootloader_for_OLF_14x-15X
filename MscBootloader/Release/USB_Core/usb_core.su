@@ -1,0 +1,16 @@
+usb_core.c:56:5:Standard_GetConfiguration	8	static
+usb_core.c:102:5:Standard_GetInterface	8	static
+usb_core.c:158:5:Standard_GetStatus	8	static
+usb_core.c:483:6:DataStageIn	32	static
+usb_core.c:77:8:Standard_SetConfiguration	8	static
+usb_core.c:123:8:Standard_SetInterface	16	static
+usb_core.c:236:8:Standard_ClearFeature	16	static
+usb_core.c:325:8:Standard_SetEndPointFeature	16	static
+usb_core.c:379:8:Standard_SetDeviceFeature	8	static
+usb_core.c:405:5:Standard_GetDescriptorData	8	static
+usb_core.c:969:4:Post0_Process	8	static
+usb_core.c:844:4:Setup0_Process	32	static
+usb_core.c:928:4:Out0_Process	24	static
+usb_core.c:989:6:SetDeviceAddress	12	static
+usb_core.c:888:4:In0_Process	8	static
+usb_core.c:1009:6:NOP_Process	0	static

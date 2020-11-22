@@ -1,0 +1,2 @@
+usb_int.c:41:6:CTR_LP	32	static
+usb_int.c:158:6:CTR_HP	16	static
