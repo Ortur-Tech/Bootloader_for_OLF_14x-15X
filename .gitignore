@@ -19,6 +19,12 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 
+Debug*/
+Release*/
+
+.settings/
+*.launch
+
 # Windows shortcuts
 *.lnk
 
