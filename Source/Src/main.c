@@ -33,27 +33,24 @@ void Jump(uint32_t address)
     typedef void (*pFunction)(void);
 
     pFunction Jump_To_Application;
-
-    // variable that will be loaded with the start address of the application
-    vu32 *JumpAddress;
-    const vu32 *ApplicationAddress = (vu32 *)address;
-
-    // get jump address from application vector table
-    JumpAddress = (vu32 *)ApplicationAddress[1];
-
-    // load this address into function pointer
-    Jump_To_Application = (pFunction)JumpAddress;
+    int i;
 
     // Disable all interrupts
-    int i;
     for (i = 0; i < 8; i++)
         NVIC->ICER[i] = NVIC->IABR[i];
+    //Disable IRQ Interrupts
+     __disable_irq();
 
+    //BUG: 程序运行中切换中断向量表会造成程序跳转时引发错误
     // Set interrupt vector table
-    NVIC_SetVectorTable(NVIC_VectTab_FLASH, 0x4000);
+    //NVIC_SetVectorTable(NVIC_VectTab_FLASH, address-FLASH_BASE);
 
     // Set stack pointer as in application's vector table
-    __set_MSP((u32)(ApplicationAddress[0]));
+    __set_MSP(*((volatile uint32_t*)address));
+
+    // get jump address from application vector table
+    // load this address into function pointer
+    Jump_To_Application = (pFunction)(*(volatile uint32_t*)(address + 4));
 
     // Go
     Jump_To_Application();
@@ -238,17 +235,20 @@ int main(void)
        system_stm32f10x.c file
      */
 
+	//Enable IRQ Interrupts
+	__enable_irq();
   
     //释放几个特殊引脚做IO用
     //PB4 PB3 PA15默认用作调试口，如果用作普通的IO，需要加上以下两句
 
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
 
-
-#ifndef ORTUR_CNC_MODE
+#ifndef DEBUG
+  #ifndef ORTUR_CNC_MODE
     GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);//JTAG-DP Disabled and SW-DP Enabled
-#else
-    GPIO_PinRemapConfig(GPIO_Remap_SWJ_Disable,ENABLE);//Full SWJ Disabled (JTAG-DP + SW-DP)
+  #else
+    GPIO_PinRemapConfig(GPIO_Remap_SWJ_Disable, ENABLE);//Full SWJ Disabled (JTAG-DP + SW-DP)
+  #endif
 #endif
 
     Key_GPIO_Config();
@@ -265,6 +265,8 @@ int main(void)
     if (Key_Scan() == KEY_OFF) //NOTE:交互按钮按下就进入固件升级模式
     {
         Jump(FLASH_START_ADDR);
+        //NOTE:test jump to bootloader for sure
+        //Jump(FLASH_BASE);
     }
 
     init_usb();
