@@ -234,13 +234,13 @@ int main(void)
        To reconfigure the default setting of SystemInit() function, refer to
        system_stm32f10x.c file
      */
-
+	uint32_t RebootCnt=0;
 	//Enable IRQ Interrupts
 	__enable_irq();
   
     //释放几个特殊引脚做IO用
     //PB4 PB3 PA15默认用作调试口，如果用作普通的IO，需要加上以下两句
-
+	SystickConfig();
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
 
 #ifndef DEBUG
@@ -273,6 +273,18 @@ int main(void)
 
     while (1)
     {
+    	if(update_result == UR_SUCCESS)
+    	{
+    		/*升级完10s后重启*/
+    		if((Get_SystemTicks()-RebootCnt)>10000)
+    		{
+				Soft_Reboot();
+    		}
+    	}
+    	else
+    	{
+    		RebootCnt=Get_SystemTicks();
+    	}
 
       if(update_result == UR_READY)
       {
@@ -290,8 +302,7 @@ int main(void)
         {
 
           need_refresh = 0;
-          /*升级完重启*/
-          Soft_Reboot();
+
           //Delayms(1000);
           //reset_usb();
           //Delayms(10);
@@ -331,7 +342,7 @@ void assert_failed(uint8_t *file, uint32_t line)
 {
     /* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\\r\\n", file, line) */
-    printf("\\033[1;40;41mERROR:Wrong parameters value: file %s on line %d\\033[0m\\r\\n", file, line)
+    //printf("\\033[1;40;41mERROR:Wrong parameters value: file %s on line %d\\033[0m\\r\\n", file, line)
         /* Infinite loop */
         while (1)
     {
