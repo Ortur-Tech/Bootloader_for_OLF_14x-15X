@@ -1,55 +1,59 @@
 /*---------------------------------
-ÑÓÊ±Ä£¿éº¯Êı
-ËµÃ÷£ºÖ»ĞèÔÚ¹¤³ÌÖĞ¼ÓÈëdelay.cºÍdelay.h
-ÎÄ¼ş£¬¼´¿ÉÓÃ Delayms(__IO uint32_t nTime)£»
+å»¶æ—¶æ¨¡å—å‡½æ•°
+è¯´æ˜ï¼šåªéœ€åœ¨å·¥ç¨‹ä¸­åŠ å…¥delay.cå’Œdelay.h
+æ–‡ä»¶ï¼Œå³å¯ç”¨ Delayms(__IO uint32_t nTime)ï¼›
 Delayus(__IO uint32_t nTime)
 -----------------------------------*/
 #include"delay.h"
-static __IO uint32_t TimingDelay;
+static __IO uint32_t SystemTicks;
+
+/*1msäº§ç”Ÿä¸€æ¬¡ä¸­æ–­*/
+void SystickConfig(void)
+{
+	SysTick_Config(SystemCoreClock/1000);
+}
+
 /* Private function prototypes -----------------------------------------------*/
 /*---------------------------------
-º¯ÊıÃû£ºmsÑÓÊ±º¯Êı 
-Ãè Êö£º²ÎÊı1¼´Îª1ms£¬1000¼´Îª1s£»Ö»ÓĞ¼¸
-usµÄÎó²î£»
+å‡½æ•°åï¼šmså»¶æ—¶å‡½æ•° 
+æ è¿°ï¼šå‚æ•°1å³ä¸º1msï¼Œ1000å³ä¸º1sï¼›åªæœ‰å‡ 
+usçš„è¯¯å·®ï¼›
 -----------------------------------*/
 void Delayms(__IO uint32_t nTime) 
 { 
-while(SysTick_Config(SystemCoreClock/1000)); 
-TimingDelay = nTime;
-while(TimingDelay != 0);
-SysTick->CTRL=0x00; //¹Ø±Õ¼ÆÊıÆ÷ 
-SysTick->VAL =0X00; //Çå¿Õ¼ÆÊıÆ÷ 
+	uint32_t temp=SystemTicks;
+	while((SystemTicks-temp)<nTime);
 }
 /*---------------------------------
-º¯ÊıÃû£ºusÑÓÊ±º¯Êı 
-Ãè Êö£º²ÎÊı1¼´Îª1us£¬1000¼´Îª1ms£»Ö»ÓĞ¼¸
-usµÄÎó²î£»
+å‡½æ•°åï¼šuså»¶æ—¶å‡½æ•° 
+æ è¿°ï¼šå‚æ•°1å³ä¸º1usï¼Œ1000å³ä¸º1msï¼›åªæœ‰å‡ 
+usçš„è¯¯å·®ï¼›
 -----------------------------------*/
 void Delayus(__IO uint32_t nTime)
 { 
-while(SysTick_Config(SystemCoreClock/1000000)); 
-TimingDelay = nTime;
-while(TimingDelay != 0);
-SysTick->CTRL=0x00; //¹Ø±Õ¼ÆÊıÆ÷ 
-SysTick->VAL =0X00; //Çå¿Õ¼ÆÊıÆ÷ 
+	__IO uint32_t Delay = nTime * 72 / 8;//(SystemCoreClock / 8U / 1000000U)
+	//è§stm32f1xx_hal_rcc.c -- static void RCC_Delay(uint32_t mdelay)
+	do
+	{
+		__NOP();
+	}
+	while (Delay --);
 }
+
 /*---------------------------------
-º¯ÊıÃû£ºÑÓÊ±¸¨Öúº¯Êı 
-Ãè Êö£º 
------------------------------------*/
-void TimingDelay_Decrement(void)
-{
-if (TimingDelay != 0x00)
-{ 
-TimingDelay--;
-}
-}
-/*---------------------------------
-º¯ÊıÃû£ºsystickµÄÖĞ¶Ïº¯Êı 
-Ãè Êö£º²ÎÊı1¼´Îª1us£¬1000¼´Îª1ms£»Ö»ÓĞ¼¸
-usµÄÎó²î£»
+å‡½æ•°åï¼šsystickçš„ä¸­æ–­å‡½æ•° 
+æ è¿°ï¼šå‚æ•°1å³ä¸º1usï¼Œ1000å³ä¸º1msï¼›åªæœ‰å‡ 
+usçš„è¯¯å·®ï¼›
 -----------------------------------*/
 void SysTick_Handler(void)
 {
-TimingDelay_Decrement();
+	SystemTicks++;
 }
+
+uint32_t Get_SystemTicks(void)
+{
+	return SystemTicks;
+}
+
+
+
