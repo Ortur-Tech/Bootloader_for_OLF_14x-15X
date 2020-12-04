@@ -138,6 +138,7 @@ void Led_On(void)
 	GPIO_SetBits(GPIOA, GPIO_Pin_15);
 }
 
+#if DEBUG_LEVEL
 
 #ifdef __GNUC__
 
@@ -217,6 +218,7 @@ void Usart_SendData(uint8_t* data,uint16_t len)
 		USART1->DR = (u8) data[i++];      	//写DR,串口1将发送数据
 	}
 }
+#endif
 
 void Soft_Reboot(void)
 {
@@ -253,8 +255,9 @@ int main(void)
 
     Key_GPIO_Config();
     Leds_init();
-    
+#if DEBUG_LEVEL
     Usart1_Init();
+#endif
 
     // Force USB Reconnect
     reset_usb();

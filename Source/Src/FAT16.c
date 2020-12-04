@@ -327,7 +327,9 @@ uint32_t FAT_DataSectorWriteRequest(uint32_t FAT_LBA,uint8_t* data, uint32_t len
     //����һ�����ļ�����,@��ͷ
     if(!memcmp(FileAttr.DIR_Name, "@\0", 1))
 	{
-    	Usart_SendData(data,len);
+    	//Usart_SendData(data,len);
+    	//Delayms(10);
+    	Soft_Delayms(10);
     	len=len;
     	return len;
 	}
