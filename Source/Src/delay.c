@@ -40,6 +40,10 @@ void Delayus(__IO uint32_t nTime)
 	while (Delay --);
 }
 
+void Soft_Delayms(uint32_t n)
+{
+	Delayus(n*1000);
+}
 /*---------------------------------
 函数名：systick的中断函数 
 描 述：参数1即为1us，1000即为1ms；只有几

@@ -90,6 +90,16 @@ void Leds_init()
     //GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
 
 #ifndef ORTUR_CNC_MODE
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOB, ENABLE);
+    /*关闭限位开关的led*/
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_4;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	//默认灯光关闭
+	GPIO_ResetBits(GPIOA, GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_4);
+
+
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -138,6 +148,7 @@ void Led_On(void)
 	GPIO_SetBits(GPIOA, GPIO_Pin_15);
 }
 
+#if DEBUG_LEVEL
 
 #ifdef __GNUC__
 
@@ -217,6 +228,7 @@ void Usart_SendData(uint8_t* data,uint16_t len)
 		USART1->DR = (u8) data[i++];      	//写DR,串口1将发送数据
 	}
 }
+#endif
 
 void Soft_Reboot(void)
 {
@@ -243,18 +255,19 @@ int main(void)
 	SystickConfig();
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
 
-#ifndef DEBUG
-  #ifndef ORTUR_CNC_MODE
+
+#ifndef ORTUR_CNC_MODE
     GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);//JTAG-DP Disabled and SW-DP Enabled
-  #else
+#else
     GPIO_PinRemapConfig(GPIO_Remap_SWJ_Disable, ENABLE);//Full SWJ Disabled (JTAG-DP + SW-DP)
-  #endif
 #endif
+
 
     Key_GPIO_Config();
     Leds_init();
-    
+#if DEBUG_LEVEL
     Usart1_Init();
+#endif
 
     // Force USB Reconnect
     reset_usb();
@@ -264,6 +277,7 @@ int main(void)
     // If ISP Key is not pressed, jump to user application
     if (Key_Scan() == KEY_OFF) //NOTE:交互按钮按下就进入固件升级模式
     {
+    	Led_Off();
         Jump(FLASH_START_ADDR);
         //NOTE:test jump to bootloader for sure
         //Jump(FLASH_BASE);

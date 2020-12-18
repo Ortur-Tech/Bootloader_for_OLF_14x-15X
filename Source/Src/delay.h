@@ -12,7 +12,7 @@ extern void Delayms(__IO uint32_t nTime);
 us的误差；
 -----------------------------------*/
 extern void Delayus(__IO uint32_t nTime);
-
+void Soft_Delayms(uint32_t n);
 uint32_t Get_SystemTicks(void);
 void SystickConfig(void);
 
