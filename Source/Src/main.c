@@ -39,7 +39,7 @@ void Jump(uint32_t address)
     for (i = 0; i < 8; i++)
         NVIC->ICER[i] = NVIC->IABR[i];
     //Disable IRQ Interrupts
-     __disable_irq();
+     //__disable_irq();会导致旧固件有试用问题
 
     //BUG: 程序运行中切换中断向量表会造成程序跳转时引发错误
     // Set interrupt vector table
@@ -303,9 +303,11 @@ int main(void)
       if(update_result == UR_READY)
       {
         need_refresh = 0;
-        Led_On();
+        GPIO_SetBits(GPIOB, GPIO_Pin_3);
+        GPIO_ResetBits(GPIOA, GPIO_Pin_15);
         Delayms(100);
-        Led_Off();
+        GPIO_ResetBits(GPIOB, GPIO_Pin_3);
+        GPIO_SetBits(GPIOA, GPIO_Pin_15);
         Delayms(100);
       }
       else if(update_result == UR_SUCCESS)
