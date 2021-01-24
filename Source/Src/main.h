@@ -4,6 +4,9 @@
 #include "stm32f10x.h"
 #include <stdio.h>
 
+
+#define USE_SERIAL_IAP 1
+#define UART_UPDATE_WAIT_TIME 500 //ms
 #define DEBUG_LEVEL 0X00
 /*调试等级*/
 typedef enum{
@@ -39,6 +42,6 @@ typedef enum{
 
 extern uint8_t update_result;
 extern uint8_t need_refresh;
-
+void Jump(uint32_t address);
 void Usart_SendData(uint8_t* data,uint16_t len);
 #endif
