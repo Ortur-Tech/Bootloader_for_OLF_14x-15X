@@ -5,6 +5,11 @@
 Delayus(__IO uint32_t nTime)
 -----------------------------------*/
 #include"delay.h"
+#include "serial_iap.h"
+
+
+
+
 static __IO uint32_t SystemTicks;
 
 /*1ms产生一次中断*/
@@ -52,6 +57,7 @@ us的误差；
 void SysTick_Handler(void)
 {
 	SystemTicks++;
+	rec_TimeCheck();
 }
 
 uint32_t Get_SystemTicks(void)
