@@ -26,6 +26,7 @@
 #include "main.h"
 #include "usb_lib.h"
 #include "usb_istr.h"	 
+#include "serial_iap.h"
 
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
@@ -181,7 +182,15 @@ void USBWakeUp_IRQHandler(void)
 {
    EXTI_ClearITPendingBit(EXTI_Line18);
 }
-
+/**
+  * @brief This function handles USART1 global interrupt.
+  */
+void USART1_IRQHandler(void)
+{
+	u8 res=0;
+	res=USART1->DR;
+	rec_SerialData(res);
+}
 /**
   * @brief  This function handles PPP interrupt request.
   * @param  None

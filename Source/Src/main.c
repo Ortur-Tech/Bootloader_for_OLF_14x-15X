@@ -8,6 +8,7 @@
 #include "platform_config.h"
 #include "usb_pwr.h"
 #include "FAT16.h"
+#include "serial_iap.h"
 
 #include "stm32f10x_usart.h"
 
@@ -148,7 +149,7 @@ void Led_On(void)
 	GPIO_SetBits(GPIOA, GPIO_Pin_15);
 }
 
-#if DEBUG_LEVEL
+#if (DEBUG_LEVEL || USE_SERIAL_IAP)
 
 #ifdef __GNUC__
 
@@ -169,6 +170,7 @@ void Usart1_Init(void)
 
 	USART_InitTypeDef USART_InitStruct;
 
+	 NVIC_InitTypeDef NVIC_InitStructure;
 
 	/*LED指示灯初始化，用来标志全部初始化完成*/
 
@@ -199,6 +201,12 @@ void Usart1_Init(void)
 	GPIO_Init(GPIOA,&GPIO_InitStruct);
 
 
+    NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=3 ;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;        //
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;            //IRQ通道使能
+    NVIC_Init(&NVIC_InitStructure);    //根据NVIC_InitStruct中指定的参数初始化外设NVIC寄存器USART1
+
 	/*串口参数初始化*/
 
 	USART_InitStruct.USART_BaudRate = 115200;
@@ -214,6 +222,8 @@ void Usart1_Init(void)
 	USART_InitStruct.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
 
 	USART_Init(USART1,&USART_InitStruct);
+
+	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);//开启中断
 
 	USART_Cmd(USART1,ENABLE);
 
@@ -237,7 +247,7 @@ void Soft_Reboot(void)
 }
 uint8_t update_result = 0;
 uint8_t need_refresh = 0;
-
+uint8_t update_mode = 0;
 int main(void)
 {
     /*!< At this stage the microcontroller clock setting is already configured, 
@@ -246,6 +256,7 @@ int main(void)
        To reconfigure the default setting of SystemInit() function, refer to
        system_stm32f10x.c file
      */
+	uint8_t ret=0;
 	uint32_t RebootCnt=0;
 	//Enable IRQ Interrupts
 	__enable_irq();
@@ -265,7 +276,8 @@ int main(void)
 
     Key_GPIO_Config();
     Leds_init();
-#if DEBUG_LEVEL
+#if (DEBUG_LEVEL || USE_SERIAL_IAP)
+    serial_DataInit();
     Usart1_Init();
 #endif
 
@@ -278,11 +290,17 @@ int main(void)
     if (Key_Scan() == KEY_OFF) //NOTE:交互按钮按下就进入固件升级模式
     {
     	Led_Off();
+#if USE_SERIAL_IAP
+    	update_mode = 1;
+#else
         Jump(FLASH_START_ADDR);
+#endif
         //NOTE:test jump to bootloader for sure
         //Jump(FLASH_BASE);
     }
-
+#if USE_SERIAL_IAP
+    serial_Iap(update_mode);
+#endif
     init_usb();
 
     while (1)
