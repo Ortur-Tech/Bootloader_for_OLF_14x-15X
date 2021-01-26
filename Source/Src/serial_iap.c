@@ -135,6 +135,24 @@ uint8_t serial_DataHandle(void)
 	uint8_t data[50] = {0};
 	if(sd.DataRecFlag == 1)
 	{
+		/*判断数据长度*/
+		if(sd.DataLen<9)
+		{
+			serial_DataInit();
+			return 0;
+		}
+		/*判断帧长度*/
+		if(sd.DataLen!=(Mg(sd.DataBuf[5],sd.DataBuf[6])+9))
+		{
+			serial_DataInit();
+			return 0;
+		}
+		/*判断帧头*/
+		if((sd.DataBuf[0]!=0x55)||(sd.DataBuf[1]!=0x7a))
+		{
+			serial_DataInit();
+			return 0;
+		}
 		check_crc=CRC16_MODBUS(sd.DataBuf,sd.DataLen-2);
 		/*判断数据效验*/
 		if(Mg(sd.DataBuf[sd.DataLen-2],sd.DataBuf[sd.DataLen-1])==check_crc)

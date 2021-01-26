@@ -185,7 +185,9 @@ const uint8_t FAT16_RootDirSector[FATDirSize]=
     0x38,           /*57 - Write Date */
 };
 
-FAT_DIR_t FileAttr;
+FAT_DIR_t FileAttr={
+		.DIR_FileSize=0,
+};
 
 /*********************************************************
 * Name: FATReadLBA
@@ -278,6 +280,13 @@ uint32_t FATReadLBA(uint32_t FAT_LBA,uint8_t* data, uint32_t len)
     return FATBytesPerSec;
 } /* EndBody */
 
+
+static uint8_t startFlag=0;
+static uint32_t lastFAT_LBA=0;
+static uint32_t writeCnt=0;
+
+
+
 uint32_t FAT_RootDirWriteRequest(uint32_t FAT_LBA,uint8_t* data, uint32_t len)
 {
     FAT_DIR_t* pFile = (FAT_DIR_t*) data;
@@ -294,12 +303,35 @@ uint32_t FAT_RootDirWriteRequest(uint32_t FAT_LBA,uint8_t* data, uint32_t len)
     // Find it
     if(index <= 512)
     {
+#if DEBUG_LEVEL
+    	mprintf(LOG_INFO,"-----------------------------------------------\r\n");
+    	Usart_SendData(data,len);
+#endif
         memcpy(&FileAttr, pFile, 32);
         FileAttr.DIR_WriteTime = 0;
         FileAttr.DIR_WriteDate = 0;
+        if((writeCnt >= FileAttr.DIR_FileSize)&&(FileAttr.DIR_FileSize!=0)&&(startFlag!=0))
+		{
+        	if(update_result!=UR_SUCCESS)
+        	{
+				//writeCnt = 0;
+				FATSetStatusFileName("SUCCESS");
+				update_result = UR_SUCCESS;
+				need_refresh = 1;
+				LED_OFF();
+        	}
+        	else
+        	{
+        		writeCnt = 0;
+        	}
+		}
     }
     else
     {
+#if DEBUG_LEVEL
+    	mprintf(LOG_INFO,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\r\n");
+    	Usart_SendData(data,len);
+#endif
         memset(&FileAttr, (int)0, 32);
     }
     
@@ -311,33 +343,34 @@ extern void reset_usb(); //@\0
 
 extern u32 Data_Buffer[64 * 8];
 
+
 uint32_t FAT_DataSectorWriteRequest(uint32_t FAT_LBA,uint8_t* data, uint32_t len)
 {
-
-	static uint8_t startFlag=0;
-	static uint32_t lastFAT_LBA=0;
-	static uint32_t writeCnt=0;
 	uint8_t tempBuf[20]={0};
-
     int32_t filesize_total = (int32_t)FileAttr.DIR_FileSize;
     int32_t* filesize_write = (int32_t*)&(FileAttr.DIR_WriteTime);
-
 
     //Delayms(len/400);
     //����һ�����ļ�����,@��ͷ
     if(!memcmp(FileAttr.DIR_Name, "@\0", 1))
 	{
-    	//Usart_SendData(data,len);
-    	//Delayms(10);
+#if DEBUG_LEVEL
+    	Usart_SendData(data,len);
+#endif
     	Soft_Delayms(10);
     	len=len;
-    	return len;
+    	//return len;
 	}
+
     /*第一笔数据判断*/
     if(startFlag==0)
     {
     	/*MAC*/
+#ifndef ORTUR_CNC_MODE
     	if(!memcmp(FileAttr.DIR_Name, "OLF", 3) && !memcmp(&(FileAttr.DIR_Name[8]), "BIN", 3)&&(FileAttr.DIR_FileSize==0))
+#else
+        if(!memcmp(FileAttr.DIR_Name, "OCF", 3) && !memcmp(&(FileAttr.DIR_Name[8]), "BIN", 3)&&(FileAttr.DIR_FileSize==0))
+#endif
     	{
     		if(((Data_Buffer[0]&(0xFFF00000))==0X20000000)&&
     		    	  ((Data_Buffer[1]&(0xFFF00000))==0X08000000)&&
@@ -364,7 +397,7 @@ uint32_t FAT_DataSectorWriteRequest(uint32_t FAT_LBA,uint8_t* data, uint32_t len
     #ifndef ORTUR_CNC_MODE
 	    else if (!memcmp(FileAttr.DIR_Name, "OLF", 3) && !memcmp(&(FileAttr.DIR_Name[8]), "BIN", 3)&&(FileAttr.DIR_FileSize!=0))
 	#else
-	    if (!memcmp(FileAttr.DIR_Name, "OCF", 3) && !memcmp(&(FileAttr.DIR_Name[8]), "BIN", 3))
+	    else if (!memcmp(FileAttr.DIR_Name, "OCF", 3) && !memcmp(&(FileAttr.DIR_Name[8]), "BIN", 3)&&(FileAttr.DIR_FileSize!=0))
 	#endif
 	    {
 	    	if(((Data_Buffer[0]&(0xFFF00000))==0X20000000)&&
@@ -389,7 +422,7 @@ uint32_t FAT_DataSectorWriteRequest(uint32_t FAT_LBA,uint8_t* data, uint32_t len
 				}
 	    }
     	/*添加对linux电脑支持*/
-		else if(FileAttr.DIR_Name[8]==0x00)
+		else if((FileAttr.DIR_Name[8]==0x00)||(FileAttr.DIR_Name[0]=='@'))
 		{
 			/*根据bin文件文件特征判断
 			 第一个数据是复位后sp的地址，第二个是Reset的地址按说是0x0800 0869。接下来的几个地址就是实际中断向量服务函数的入口地址。
@@ -656,6 +689,10 @@ uint32_t FAT_DataSectorWriteRequest(uint32_t FAT_LBA,uint8_t* data, uint32_t len
 
 uint32_t FATWriteLBA(uint32_t FAT_LBA,uint8_t* data, uint32_t len)
 {
+#if DEBUG_LEVEL
+    	mprintf(LOG_INFO,"=================================================\r\n");
+    	Usart_SendData(data,len);
+#endif
     switch(FAT_LBA)
     {
         case 0x0000: // 4K   Boot Sector
