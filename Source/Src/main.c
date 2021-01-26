@@ -85,12 +85,7 @@ void Leds_init()
     //初始灯光
     GPIO_InitTypeDef GPIO_InitStructure;
 
-    //NOTE:在主函数中执行
-    //PB4 PB3 PA15默认用作调试口，如果用作普通的IO，需要加上以下两句
-    //RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
-    //GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
-
-#ifndef ORTUR_CNC_MODE
+#if defined(ORTUR_LASER_MODE)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOB, ENABLE);
     /*关闭限位开关的led*/
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_4;
@@ -107,15 +102,13 @@ void Leds_init()
     GPIO_Init(GPIOB, &GPIO_InitStructure);
     //默认灯光关闭
     GPIO_ResetBits(GPIOB, GPIO_Pin_3);
-#else
+#elif defined(ORTUR_CNC_MODE) && !defined(DEBUG)
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
-    GPIO_SetBits(GPIOA,GPIO_Pin_3);
-    
     //默认灯光关闭
-    GPIO_WriteBit(GPIOB, GPIO_Pin_3, Bit_RESET);
+    GPIO_ResetBits(GPIOA, GPIO_Pin_14);
 #endif
     
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;
@@ -131,9 +124,9 @@ void Leds_init()
 
 void Led_Off(void)
 {
-#ifndef ORTUR_CNC_MODE
+#if defined(ORTUR_LASER_MODE)
 	GPIO_ResetBits(GPIOB, GPIO_Pin_3);
-#else
+#elif defined(ORTUR_CNC_MODE) && !defined(DEBUG)
 	GPIO_ResetBits(GPIOA, GPIO_Pin_14);
 #endif
     GPIO_ResetBits(GPIOA, GPIO_Pin_15);
@@ -141,9 +134,9 @@ void Led_Off(void)
 
 void Led_On(void)
 {
-#ifndef ORTUR_CNC_MODE
+#if defined(ORTUR_LASER_MODE)
 	GPIO_SetBits(GPIOB, GPIO_Pin_3);
-#else
+#elif defined(ORTUR_CNC_MODE) && !defined(DEBUG)
 	GPIO_SetBits(GPIOA, GPIO_Pin_14);
 #endif
 	GPIO_SetBits(GPIOA, GPIO_Pin_15);
@@ -267,9 +260,9 @@ int main(void)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
 
 
-#ifndef ORTUR_CNC_MODE
+#if defined(ORTUR_LASER_MODE) || defined(DEBUG)
     GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);//JTAG-DP Disabled and SW-DP Enabled
-#else
+#elif defined(ORTUR_CNC_MODE)
     GPIO_PinRemapConfig(GPIO_Remap_SWJ_Disable, ENABLE);//Full SWJ Disabled (JTAG-DP + SW-DP)
 #endif
 
@@ -298,6 +291,7 @@ int main(void)
         //NOTE:test jump to bootloader for sure
         //Jump(FLASH_BASE);
     }
+
 #if USE_SERIAL_IAP
     serial_Iap(update_mode);
 #endif
@@ -321,10 +315,18 @@ int main(void)
       if(update_result == UR_READY)
       {
         need_refresh = 0;
+#if defined(ORTUR_LASER_MODE)
         GPIO_SetBits(GPIOB, GPIO_Pin_3);
+#elif defined(ORTUR_CNC_MODE) && !defined(DEBUG)
+        GPIO_SetBits(GPIOA, GPIO_Pin_14);
+#endif
         GPIO_ResetBits(GPIOA, GPIO_Pin_15);
         Delayms(100);
+#if defined(ORTUR_LASER_MODE)
         GPIO_ResetBits(GPIOB, GPIO_Pin_3);
+#elif defined(ORTUR_CNC_MODE) && !defined(DEBUG)
+        GPIO_ResetBits(GPIOA, GPIO_Pin_14);
+#endif
         GPIO_SetBits(GPIOA, GPIO_Pin_15);
         Delayms(100);
       }
