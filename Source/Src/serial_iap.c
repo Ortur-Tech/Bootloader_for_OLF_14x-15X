@@ -174,7 +174,7 @@ uint8_t serial_DataHandle(void)
 				{
 					mprintf(LOG_INFO,"Communication command received.\r\n");
 					serial_DataInit();
-					reply(comm_num,0x03,"19920514",8);
+					reply(comm_num,0x03,GFU_CMD_IDENT,8);
 					res=1;
 					break;
 				}
