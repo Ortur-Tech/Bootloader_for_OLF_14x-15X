@@ -27,7 +27,7 @@
   * @param  None
   * @retval None
   */
-
+uint32_t UART_UPDATE_WAIT_TIME = 500;
 
 void Jump(uint32_t address)
 {
