@@ -6,8 +6,10 @@
 
 
 #define USE_SERIAL_IAP 1
-#define UART_UPDATE_WAIT_TIME 500 //ms
+//#define UART_UPDATE_WAIT_TIME 500 //ms
 #define DEBUG_LEVEL 0X00
+
+extern uint32_t UART_UPDATE_WAIT_TIME;
 /*调试等级*/
 typedef enum{
     LOG_DEBUG=1,
