@@ -13,6 +13,8 @@
 #define HEADER_LOW  0X7a
 #define HEADER_HIGH 0x55
 
+#define PROTOCOL_VERSION 0X01
+
 #define HEADER_POS 0
 #define HEADER_LEN 2
 #define COMM_NUM_POS 2

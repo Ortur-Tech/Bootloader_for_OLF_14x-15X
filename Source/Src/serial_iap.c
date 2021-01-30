@@ -72,26 +72,32 @@ uint16_t Mg(uint8_t h,uint8_t l)
 }
 
 /*串口协议数据响应*/
-void reply(uint8_t cmd,uint8_t* data,uint16_t len)
+void reply(uint8_t comm_num,uint8_t cmd,uint8_t* data,uint16_t len)
 {
 	uint8_t buf[100]={0};
 	uint16_t crc=0;
-	static uint16_t comm_num=0;
-	uint16_t i=0;
 
+	uint16_t i=0;
+	/*协议头*/
 	buf[i++]=HEADER_HIGH;
 	buf[i++]=HEADER_LOW;
-	buf[i++]=(comm_num>>8);
-	buf[i++]=(comm_num);
+	/*协议版本*/
+	buf[i++]=PROTOCOL_VERSION;
+	/*通讯编号*/
+	buf[i++]=comm_num;
+	/*命令码*/
 	buf[i++]=cmd;
+	/*数据长度*/
 	buf[i++]=(len>>8);
 	buf[i++]=(len);
+	/*数据*/
 	memcpy(&buf[i],data,len);
 	i=i+len;
+	/*crc效验*/
 	crc=CRC16_MODBUS(buf,len+7);
 	buf[i++]=(crc>>8);
 	buf[i++]=(crc);
-
+	/*发送数据*/
 	Usart_SendData(buf,i);
 
 }
@@ -129,10 +135,12 @@ uint8_t serial_DataHandle(void)
 {
 	uint8_t programCnt = 0;
 	volatile uint8_t res = 0;
+	static uint32_t pre_packge_num=0;
 	uint32_t packge_num = 0;
 	static uint32_t write_cnt = 0;
 	uint16_t check_crc = 0;
-	uint8_t data[50] = {0};
+	uint8_t data[10] = {0};
+	uint8_t comm_num=0;
 	if(sd.DataRecFlag == 1)
 	{
 		/*判断数据长度*/
@@ -157,30 +165,35 @@ uint8_t serial_DataHandle(void)
 		/*判断数据效验*/
 		if(Mg(sd.DataBuf[sd.DataLen-2],sd.DataBuf[sd.DataLen-1])==check_crc)
 		{
+			/*通讯编号*/
+			comm_num=sd.DataBuf[3];
+
 			switch(sd.DataBuf[4])
 			{
 				case 0x03:
 				{
 					mprintf(LOG_INFO,"Communication command received.\r\n");
 					serial_DataInit();
-					reply(0x03,"19920514",8);
+					reply(comm_num,0x03,"19920514",8);
 					res=1;
 					break;
 				}
 				case 0x04:
 				{
+					/*进入升级模式后延长退出时间*/
+					UART_UPDATE_WAIT_TIME = 3000;
 					/*解析一些数据*/
 					App.size=sd.DataBuf[DATA_POS+3]+((uint32_t)sd.DataBuf[DATA_POS+2]<<8)+((uint32_t)sd.DataBuf[DATA_POS+1]<<16)+((uint32_t)sd.DataBuf[DATA_POS]<<24);
 					App.type=sd.DataBuf[DATA_POS+4];
 					App.crc32=sd.DataBuf[DATA_POS+8]+((uint32_t)sd.DataBuf[DATA_POS+7]<<8)+((uint32_t)sd.DataBuf[DATA_POS+6]<<16)+((uint32_t)sd.DataBuf[DATA_POS+5]<<24);
-					App.fileAddr=sd.DataBuf[DATA_POS+12]+((uint32_t)sd.DataBuf[DATA_POS+11]<<8)+((uint32_t)sd.DataBuf[DATA_POS+10]<<16)+((uint32_t)sd.DataBuf[DATA_POS+9]<<24);
-
+					//App.fileAddr=sd.DataBuf[DATA_POS+12]+((uint32_t)sd.DataBuf[DATA_POS+11]<<8)+((uint32_t)sd.DataBuf[DATA_POS+10]<<16)+((uint32_t)sd.DataBuf[DATA_POS+9]<<24);
+					App.fileAddr=FLASH_START_ADDR;
 					mprintf(LOG_INFO,"Write data size:%d Write data type:%d Write data crc32:%d Write data addr:%lu。\r\n",App.size,App.type,App.crc32,App.fileAddr);
 
 					mprintf(LOG_INFO,"Setup upgrade command received.\r\n");
 					data[0]=0;
 					serial_DataInit();
-					reply(0x04,data,1);
+					reply(comm_num,0x04,data,1);
 					write_cnt=0;
 					res=1;
 					break;
@@ -190,6 +203,16 @@ uint8_t serial_DataHandle(void)
 					if(App.type == 1)
 					{
 						packge_num=Mg(sd.DataBuf[7],sd.DataBuf[8]);
+						/*数据包发送错误，请求重复指定数据包*/
+						if(packge_num!=pre_packge_num)
+						{
+							data[0]=1;
+							data[1]=pre_packge_num>>8;
+							data[2]=pre_packge_num;
+							serial_DataInit();
+							reply(comm_num,0x05,data,3);
+							return 1;
+						}
 						/*写入flash，最多10次写入效验*/
 						while(res == 0)
 						{
@@ -199,15 +222,18 @@ uint8_t serial_DataHandle(void)
 							if(0 == mymemcmp(&sd.DataBuf[9],tempBuf,Mg(sd.DataBuf[5],sd.DataBuf[6])-2))
 							{
 								res = 1;
+								pre_packge_num++;
 								programCnt=0;
 							}
+							/*写入flash失败*/
 							if(programCnt>10)
 							{
-								data[0]=packge_num>>8;
-								data[1]=packge_num;
+								data[0]=2;
+								data[1]=packge_num>>8;
+								data[2]=packge_num;
 								serial_DataInit();
-								reply(0x05,data,2);
-								return 0;
+								reply(comm_num,0x05,data,3);
+								return 1;
 							}
 						}
 						write_cnt=write_cnt+Mg(sd.DataBuf[5],sd.DataBuf[6])-2;
@@ -222,18 +248,40 @@ uint8_t serial_DataHandle(void)
 							}
 						}
 						data[0]=0;
-						data[1]=0;
+						data[1]=packge_num>>8;
+						data[2]=packge_num;
 						serial_DataInit();
-						reply(0x05,data,2);
+						reply(comm_num,0x05,data,2);
 					}
 					break;
 				}
 				case 0x06:
 				{
-					data[0]=0;
-					serial_DataInit();
-					reply(0x04,data,1);
-					res=2;
+					/*重启*/
+					if(sd.DataBuf[DATA_POS]==1)
+					{
+						data[0]=0;
+						serial_DataInit();
+						reply(comm_num,0x06,data,1);
+						Soft_Reboot();
+						res=0;
+					}/*进入U盘模式*/
+					else if(sd.DataBuf[DATA_POS]==2)
+					{
+						data[0]=0;
+						serial_DataInit();
+						reply(comm_num,0x06,data,1);
+						res=2;
+					}/*跳转到app*/
+					else if(sd.DataBuf[DATA_POS]==3)
+					{
+						data[0]=0;
+						serial_DataInit();
+						reply(comm_num,0x06,data,1);
+						res=0;
+						Jump(FLASH_START_ADDR);
+					}
+
 					break;
 				}
 				default:
