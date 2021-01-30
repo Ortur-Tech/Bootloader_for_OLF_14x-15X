@@ -238,7 +238,6 @@ uint8_t serial_DataHandle(void)
 						}
 						write_cnt=write_cnt+Mg(sd.DataBuf[5],sd.DataBuf[6])-2;
 						mprintf(LOG_IMP_INFO,"Upgrade total file size=%d.\r\nWritten data=%d.\r\n",App.size,write_cnt);
-
 						if(App.size==write_cnt)
 						{
 							/*数据已经写完，效验CRC32*/
@@ -246,12 +245,18 @@ uint8_t serial_DataHandle(void)
 							{
 								mprintf(LOG_IMP_INFO,"The new firmware has been updated...\r\n");
 							}
+							pre_packge_num=0;
+							data[0]=3;//数据接收完成
 						}
-						data[0]=0;
+						else
+						{
+							data[0]=0;//数据接收ok
+						}
+
 						data[1]=packge_num>>8;
 						data[2]=packge_num;
 						serial_DataInit();
-						reply(comm_num,0x05,data,2);
+						reply(comm_num,0x05,data,3);
 					}
 					break;
 				}
