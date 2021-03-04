@@ -24,6 +24,11 @@
 #define DATA_LEN_LEN 2
 #define DATA_POS 7
 
+#if defined(ORTUR_LASER_MODE)
+#define GFU_CMD_IDENT       "ORTULASE" // [ORTU]R [LASE]R   通讯身份标识
+#elif defined(ORTUR_CNC_MODE)
+#define GFU_CMD_IDENT       "ORTUAUFE" // [ORTU]R [AUFE]RO  通讯身份标识
+#endif
 
 uint8_t serial_DataHandle(void);
 
